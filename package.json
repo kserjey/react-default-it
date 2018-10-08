@@ -1,0 +1,23 @@
+{
+  "name": "react-default-it",
+  "version": "0.1.0",
+  "description": "Generate defaultProps based on PropTypes",
+  "scripts": {
+    "build": "nearleyc ./src/grammar.ne --out ./src/grammar.js",
+    "test": "mocha"
+  },
+  "keywords": [
+    "react",
+    "defaultProps",
+    "PropTypes"
+  ],
+  "author": "Sergey Korchinskiy <k.serjey@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "nearley": "^2.15.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0"
+  }
+}
