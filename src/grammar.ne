@@ -6,11 +6,11 @@ expression -> _ shape _  {% d => d[1] %}
 shape -> "{" _ "}" {% () => ({}) %}
   | "{" _ pair (_ "," _ pair):* _ "}" {% extractObject %}
 
-pair -> key _ ":" _ value {% ([key,,,,value]) => [key.join(''), value] %}
+pair -> key _ ":" _ type {% ([key,,,,type]) => [key, type] %}
 
-key -> dqstring | sqstring | [\w]:+ {% id %}
+key -> dqstring | sqstring | [\w]:+ {% ([key]) => key.join('') %}
 
-value -> "'" "test" "'" {% ([,value,]) => value %}
+type -> [\w]:+ ("." [\w]:+):* {% extractType %}
 
 @{%
 
@@ -20,6 +20,15 @@ function extractObject(d) {
     (acc, [,,,[key, value]]) => ({ ...acc, [key]: value }), 
     { [firstKey]: firstValue }
   );
+}
+
+function extractType([first, rest]) {
+  return {
+    type: rest.reduce(
+      (acc, [,str]) => `${acc}.${str.join('')}`,
+      first.join('')
+    )
+  }
 }
 
 %}
