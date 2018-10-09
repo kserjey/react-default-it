@@ -46,5 +46,12 @@ describe('parser', () => {
       parser.feed('{ key: PropTypes.string }');
       expect(parser.results[0]).to.deep.equal(expected);
     })
+
+    it('functional types', () => {
+      const parser = createParser();
+      const expected = { key: { type: 'PropTypes.oneOf', args: [] } };
+      parser.feed('{ key: PropTypes.oneOf() }');
+      expect(parser.results[0]).to.deep.equal(expected);
+    })
   })
 })

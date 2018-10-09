@@ -12,13 +12,15 @@ function extractObject(d) {
   );
 }
 
-function extractType([first, rest]) {
-  return {
-    type: rest.reduce(
-      (acc, [,str]) => `${acc}.${str.join('')}`,
-      first.join('')
-    )
-  }
+function extractType([type, args]) {
+  return Object.assign({}, { type }, args && { args: args[1] });
+}
+
+function extractName([first, rest]) {
+  return rest.reduce(
+    (acc, [,,,str]) => `${acc}.${str.join('')}`,
+    first.join('')
+  )
 }
 
 var grammar = {
@@ -56,28 +58,33 @@ var grammar = {
             return d.join("");
         }
         },
-    {"name": "expression", "symbols": ["_", "shape", "_"], "postprocess": d => d[1]},
-    {"name": "shape", "symbols": [{"literal":"{"}, "_", {"literal":"}"}], "postprocess": () => ({})},
-    {"name": "shape$ebnf$1", "symbols": []},
-    {"name": "shape$ebnf$1$subexpression$1", "symbols": ["_", {"literal":","}, "_", "pair"]},
-    {"name": "shape$ebnf$1", "symbols": ["shape$ebnf$1", "shape$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "shape", "symbols": [{"literal":"{"}, "_", "pair", "shape$ebnf$1", "_", {"literal":"}"}], "postprocess": extractObject},
-    {"name": "pair", "symbols": ["key", "_", {"literal":":"}, "_", "type"], "postprocess": ([key,,,,type]) => [key, type]},
-    {"name": "key", "symbols": ["dqstring"]},
-    {"name": "key", "symbols": ["sqstring"]},
-    {"name": "key$ebnf$1", "symbols": [/[\w]/]},
-    {"name": "key$ebnf$1", "symbols": ["key$ebnf$1", /[\w]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "key", "symbols": ["key$ebnf$1"], "postprocess": ([key]) => key.join('')},
-    {"name": "type$ebnf$1", "symbols": [/[\w]/]},
-    {"name": "type$ebnf$1", "symbols": ["type$ebnf$1", /[\w]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "type$ebnf$2", "symbols": []},
-    {"name": "type$ebnf$2$subexpression$1$ebnf$1", "symbols": [/[\w]/]},
-    {"name": "type$ebnf$2$subexpression$1$ebnf$1", "symbols": ["type$ebnf$2$subexpression$1$ebnf$1", /[\w]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "type$ebnf$2$subexpression$1", "symbols": [{"literal":"."}, "type$ebnf$2$subexpression$1$ebnf$1"]},
-    {"name": "type$ebnf$2", "symbols": ["type$ebnf$2", "type$ebnf$2$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "type", "symbols": ["type$ebnf$1", "type$ebnf$2"], "postprocess": extractType}
+    {"name": "Chunk", "symbols": ["_", "Shape", "_"], "postprocess": d => d[1]},
+    {"name": "Shape", "symbols": [{"literal":"{"}, "_", {"literal":"}"}], "postprocess": () => ({})},
+    {"name": "Shape$ebnf$1", "symbols": []},
+    {"name": "Shape$ebnf$1$subexpression$1", "symbols": ["_", {"literal":","}, "_", "Pair"]},
+    {"name": "Shape$ebnf$1", "symbols": ["Shape$ebnf$1", "Shape$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Shape", "symbols": [{"literal":"{"}, "_", "Pair", "Shape$ebnf$1", "_", {"literal":"}"}], "postprocess": extractObject},
+    {"name": "Pair", "symbols": ["Key", "_", {"literal":":"}, "_", "Type"], "postprocess": ([key,,,,type]) => [key, type]},
+    {"name": "Key", "symbols": ["dqstring"]},
+    {"name": "Key", "symbols": ["sqstring"]},
+    {"name": "Key$ebnf$1", "symbols": [/[\w]/]},
+    {"name": "Key$ebnf$1", "symbols": ["Key$ebnf$1", /[\w]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Key", "symbols": ["Key$ebnf$1"], "postprocess": ([key]) => key.join('')},
+    {"name": "Type$ebnf$1$subexpression$1", "symbols": ["_", "Args"]},
+    {"name": "Type$ebnf$1", "symbols": ["Type$ebnf$1$subexpression$1"], "postprocess": id},
+    {"name": "Type$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "Type", "symbols": ["Name", "Type$ebnf$1"], "postprocess": extractType},
+    {"name": "Name$ebnf$1", "symbols": [/[\w]/]},
+    {"name": "Name$ebnf$1", "symbols": ["Name$ebnf$1", /[\w]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Name$ebnf$2", "symbols": []},
+    {"name": "Name$ebnf$2$subexpression$1$ebnf$1", "symbols": [/[\w]/]},
+    {"name": "Name$ebnf$2$subexpression$1$ebnf$1", "symbols": ["Name$ebnf$2$subexpression$1$ebnf$1", /[\w]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Name$ebnf$2$subexpression$1", "symbols": ["_", {"literal":"."}, "_", "Name$ebnf$2$subexpression$1$ebnf$1"]},
+    {"name": "Name$ebnf$2", "symbols": ["Name$ebnf$2", "Name$ebnf$2$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "Name", "symbols": ["Name$ebnf$1", "Name$ebnf$2"], "postprocess": extractName},
+    {"name": "Args", "symbols": [{"literal":"("}, "_", {"literal":")"}], "postprocess": () => []}
 ]
-  , ParserStart: "expression"
+  , ParserStart: "Chunk"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;

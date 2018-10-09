@@ -1,16 +1,20 @@
 @builtin "whitespace.ne"
 @builtin "string.ne"
 
-expression -> _ shape _  {% d => d[1] %}
+Chunk -> _ Shape _  {% d => d[1] %}
 
-shape -> "{" _ "}" {% () => ({}) %}
-  | "{" _ pair (_ "," _ pair):* _ "}" {% extractObject %}
+Shape -> "{" _ "}" {% () => ({}) %}
+  | "{" _ Pair (_ "," _ Pair):* _ "}" {% extractObject %}
 
-pair -> key _ ":" _ type {% ([key,,,,type]) => [key, type] %}
+Pair -> Key _ ":" _ Type {% ([key,,,,type]) => [key, type] %}
 
-key -> dqstring | sqstring | [\w]:+ {% ([key]) => key.join('') %}
+Key -> dqstring | sqstring | [\w]:+ {% ([key]) => key.join('') %}
 
-type -> [\w]:+ ("." [\w]:+):* {% extractType %}
+Type -> Name (_ Args):? {% extractType %}
+
+Name -> [\w]:+ (_ "." _ [\w]:+):* {% extractName %}
+
+Args -> "(" _ ")" {% () => [] %}
 
 @{%
 
@@ -22,13 +26,15 @@ function extractObject(d) {
   );
 }
 
-function extractType([first, rest]) {
-  return {
-    type: rest.reduce(
-      (acc, [,str]) => `${acc}.${str.join('')}`,
-      first.join('')
-    )
-  }
+function extractType([type, args]) {
+  return Object.assign({}, { type }, args && { args: args[1] });
+}
+
+function extractName([first, rest]) {
+  return rest.reduce(
+    (acc, [,,,str]) => `${acc}.${str.join('')}`,
+    first.join('')
+  )
 }
 
 %}
